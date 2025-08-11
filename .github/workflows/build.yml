@@ -1,0 +1,37 @@
+name: Build and deploy to Azure Functions
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: "paralela" # <-- Reemplaza con el nombre de tu Function App
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: "target/Asig-paralelas-1.0-SNAPSHOT.jar" # <-- Ruta del JAR
+  JAVA_VERSION: "11"
+  FUNCTION_ACTION: "package" # <-- Acción de Maven (package)
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Java version
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: "Build with Maven"
+        run: |
+          mvn ${{ env.FUNCTION_ACTION }}
+
+      - name: "Run Azure Functions Action"
+        uses: Azure/functions-action@v1
+        id: fa
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
